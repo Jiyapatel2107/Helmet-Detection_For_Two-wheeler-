@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHIELD-AI | Helmet Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg: #09090b;
+            --card: #11141d;
+            --border: #27272a;
+        }
+
+        body { margin:0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #fafafa; overflow: hidden; }
+        .container { display:flex; height:100vh; }
+
+        /* Sidebar */
+        .sidebar { width: 280px; background: var(--card); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; }
+        .logo { 
+            color: var(--primary); 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            letter-spacing: 1px; 
+            margin-bottom: 4px; 
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            /* This creates the "Neon Blue" glow effect */
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 
+                        0 0 20px rgba(59, 130, 246, 0.3);
+            text-transform: uppercase;
+        }
+        .logo i {
+            filter: drop-shadow(0 0 5px var(--primary));
+        }
+        .tagline { font-size: 10px; color: #d8d8da; text-transform: uppercase; margin-bottom: 40px; }
+
+        /* Controls */
+        .btn { 
+            width: 100%; padding: 12px; margin: 6px 0; border: 1px solid var(--border); border-radius: 8px; 
+            cursor: pointer; color: white; font-weight: 500; display: flex; align-items: center; gap: 10px;
+            transition: all 0.2s; background: transparent;
+        }
+        .btn i { font-size: 1.1rem; }
+        .btn:hover { background: #27272a; transform: translateY(-1px); }
+        .btn-primary { background: var(--primary); border: none; }
+        .btn-primary:hover { background: #2563eb; }
+
+        /* Main Feed */
+        .main { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; }
+        .view-port { 
+            height: 380px; background: #000; border-radius: 16px; border: 1px solid var(--border);
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        #output { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-label { font-size: 12px; color: #a1a1aa; margin-bottom: 4px; }
+        .stat-value { font-size: 1.25rem; font-weight: 700; }
+        .val-danger { color: var(--danger); }
+
+        /* New Analytics Grid */
+        .analytics-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; }
+        .chart-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; height: 180px; }
+
+        /* Incident Log */
+        .log-panel { width: 300px; background: var(--card); border-left: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+        .log-item { 
+            padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .log-time { color: #71717a; font-family: monospace; }
+        
+        .pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-shield-halved"></i> SHIELD-AI
+        </div>
+        <div class="tagline">Neural Safety Monitoring</div>
+
+        <button class="btn btn-primary" onclick="document.getElementById('imgInput').click()">
+            <i class="fas fa-expand"></i> Scan Image
+        </button>
+        <input type="file" id="imgInput" hidden accept="image/*">
+
+        <button class="btn" onclick="document.getElementById('vidInput').click()">
+            <i class="fas fa-video"></i> Analyze Video
+        </button>
+        <input type="file" id="vidInput" hidden accept="video/*">
+
+        <button class="btn" onclick="startWebcam()">
+            <i class="fas fa-camera"></i>Live Stream
+        </button>
+        
+        <button class="btn" onclick="stopAll()" style="color: #71717a;">
+            <i class="fas fa-power-off"></i>Terminate
+        </button>
+
+        <button class="btn" onclick="location.href='/gallery'" style="border-color: var(--primary); color: var(--primary);">
+            <i class="fas fa-images"></i> Evidence Gallery
+        </button>
+
+        <button class="btn" onclick="location.href='/generate_report'" style="border-color: #10b981; color: #10b981;">
+            <i class="fas fa-file-invoice"></i> Generate Daily Report
+        </button>
+
+        <div style="margin-top: auto;">
+            <button class="btn" style="background: #be123c; border: none;" onclick="location.href='/logout'">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="status-bar">
+            <h3 id="status" style="margin:0; font-weight: 600;">System: <span style="color: var(--success)">Operational</span></h3>
+            <div id="timestamp" style="color: #71717a; font-family: monospace;"></div>
+        </div>
+
+        <div class="view-port">
+            <img id="output" src="" alt="Awaiting input stream...">
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-microchip"></i>Throughput (FPS)</div>
+                <div class="stat-value" id="fps">0.00</div>
+            </div>
+            <div class="stat-card" id="violation-card">
+                <div class="stat-label"><i class="fas fa-exclamation-triangle"></i>Violations</div>
+                <div class="stat-value val-danger" id="violations">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-check-double"></i>Safe Counts</div>
+                <div class="stat-value" id="safe" style="color: var(--success)">0</div>
+            </div>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="chart-box">
+                <canvas id="lineChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="log-panel">
+        <h4 style="margin-top: 0; margin-bottom: 20px; color: #dbdbdb; font-size: 14px; font-weight: bold;">Activity Logs</h4>
+        <div id="logs"></div>
+    </div>
+</div>
+
+<script>
+    // --- 📊 Initialize Charts ---
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    const lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Violations/Min', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    display: false
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)', // Visible grid lines
+                        borderColor: '#27272a',
+                        drawTicks: true,
+                    },
+                    ticks: { color: '#71717a' }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    const pieChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: { labels: ['Safe', 'Unsafe'], datasets: [{ data: [1, 0], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
+    });
+
+    // --- Original UI Logic ---
+    function updateClock() {
+        document.getElementById('timestamp').innerText = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+
+    function addLog(message) {
+        const logBox = document.getElementById("logs");
+        const entry = document.createElement("div");
+        entry.className = "log-item";
+        entry.innerHTML = `<span class="log-msg">${message}</span> <span class="log-time">${new Date().toLocaleTimeString()}</span>`;
+        logBox.prepend(entry);
+    }
+
+    function stopAll() {
+        document.getElementById("output").src = "";
+        document.getElementById("status").innerHTML = "System: <span style='color: #71717a;'>Standby</span>";
+        addLog("Stream Terminated");
+    }
+
+    document.getElementById("imgInput").onchange = function() {
+        let fd = new FormData();
+        fd.append("file", this.files[0]);
+        document.getElementById("status").innerText = "Analyzing Frame...";
+        fetch("/predict", {method:"POST", body:fd})
+            .then(res => res.json())
+            .then(d => {
+                document.getElementById("output").src = d.image + "?t=" + Date.now();
+                document.getElementById("status").innerHTML = "System: <span style='color: var(--success)'>Complete</span>";
+                addLog("Image Analysis Finished");
+            });
+    };
+
+    document.getElementById("vidInput").onchange = function() {
+        let fd = new FormData();
+        fd.append("video", this.files[0]);
+        fetch("/upload_video", {method:"POST", body:fd}).then(() => {
+            document.getElementById("output").src = "/video_feed?t=" + new Date().getTime();
+            addLog("Video Started");
+        });
+    };
+
+    function startWebcam() {
+        document.getElementById("output").src = "/webcam_feed?t=" + new Date().getTime();
+        document.getElementById("status").innerHTML = "System: <span style='color:red;'>Live Webcam</span>";
+        addLog("Webcam Activated");
+    }
+
+    let displayedImages = new Set();
+
+    setInterval(() => {
+        fetch("/stats").then(res => res.json()).then(d => {
+            document.getElementById("fps").innerText = d.fps;
+            document.getElementById("safe").innerText = d.safe;
+            
+            const vBox = document.getElementById("violations");
+            const vCard = document.getElementById("violation-card");
+            
+            if (parseInt(d.violations) > parseInt(vBox.innerText)) {
+                vCard.classList.add("pulse");
+                addLog("VIOLATION DETECTED");
+                setTimeout(() => vCard.classList.remove("pulse"), 2000);
+            }
+            vBox.innerText = d.violations;
+
+            // Line Chart (Violations per minute)
+            const now = new Date().toLocaleTimeString();
+            lineChart.data.labels.push(now);
+            lineChart.data.datasets[0].data.push(d.v_per_minute);
+            if(lineChart.data.labels.length > 10) { lineChart.data.labels.shift(); lineChart.data.datasets[0].data.shift(); }
+            lineChart.update();
+
+            //  Ratio Chart
+            pieChart.data.datasets[0].data = [d.safe, d.violations];
+            pieChart.update();
+        });
+
+        // Evidence Capture Logs
+        fetch("/get_violations").then(res => res.json()).then(images => {
+            const logBox = document.getElementById("logs");
+            images.forEach(imgUrl => {
+                if (!displayedImages.has(imgUrl)) {
+                    displayedImages.add(imgUrl);
+                    const entry = document.createElement("div");
+                    entry.className = "log-item";
+                    entry.style.flexDirection = "column";
+                    entry.style.alignItems = "flex-start";
+                    entry.style.gap = "8px";
+                    entry.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span style="color:var(--danger); font-weight:bold;">OFFENDER DETECTED</span>
+                            <span class="log-time">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <img src="${imgUrl}" style="width:100%; border-radius:8px; border:1px solid var(--border); cursor:pointer;" onclick="window.open(this.src)">
+                    `;
+                    logBox.prepend(entry);
+                }
+            });
+        });
+    }, 2000);
+</script>
+</body>
+</html>

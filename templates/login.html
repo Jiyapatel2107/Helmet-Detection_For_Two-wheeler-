@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SHIELD-AI Login</title>
+
+<style>
+body {
+    margin:0;
+    font-family: 'Segoe UI';
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+}
+
+/* 🔥 BACKGROUND IMAGE LAYER */
+body::before {
+    content:"";
+    position:absolute;
+    inset:0;
+
+    background: url("/static/bg.jpg") no-repeat center center/cover;
+
+    filter: blur(10px) brightness(0.5); /* 🔥 BLUR + DARK */
+    transform: scale(1.1); /* avoids blur edges */
+    z-index:-1;
+}
+/* 🔥 GLASS CARD */
+.box {
+    position:relative;
+    background: rgba(26,26,26,0.85);
+    padding:40px;
+    border-radius:20px;
+    width:320px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 30px rgba(0,0,0,0.6);
+    border:1px solid rgba(255,255,255,0.1);
+    text-align:center;
+}
+
+/* 🔥 TITLE */
+h2 {
+    margin-bottom:20px;
+    color:#3b82f6;
+    letter-spacing:1px;
+}
+
+/* INPUT */
+input {
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    background:#111;
+    color:white;
+    outline:none;
+    transition:0.3s;
+}
+
+input:focus {
+    border:1px solid #3b82f6;
+    box-shadow:0 0 8px #3b82f6;
+}
+
+/* BUTTON */
+button {
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#3b82f6;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+
+button:hover {
+    background:#2563eb;
+    transform: scale(1.05);
+}
+
+/* LINK */
+a {
+    color:#3b82f6;
+    text-decoration:none;
+    font-size:14px;
+}
+
+.error {
+    color:red;
+    margin-top:10px;
+}
+
+/* 🔥 LOGO TEXT */
+.logo {
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:10px;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <div class="logo">SHIELD-AI</div>
+    <h2>Admin Login</h2>
+
+    <form method="POST" autocomplete="off">
+
+        <!-- Autofill Fix -->
+        <input type="text" style="position:absolute; top:-9999px;">
+        <input type="password" style="position:absolute; top:-9999px;">
+
+        <input type="text" name="username" placeholder="Username" autocomplete="off" required>
+        <input type="password" name="password" placeholder="Password" autocomplete="new-password" required>
+
+        <button type="submit">Login</button>
+
+        <p style="margin-top:10px;">
+            <a href="/forgot">Forgot Password?</a>
+        </p>
+    </form>
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+</div>
+
+</body>
+</html>
