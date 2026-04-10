@@ -184,6 +184,12 @@ set EMAIL_PASS=your_app_password
     - Helmet ✅
     - No Helmet ❌
 ---
+## 🎥 demo screen shots
+1. Image Upload Demo :
+![Demo image](demo.jpg)
+
+2. Evidence Gallery Image:
+![Evidence Gallery image](demo2.jpg)
 
 ## 🔥 Future Improvements
 - 🚀 Deploy on cloud (AWS / Render)
