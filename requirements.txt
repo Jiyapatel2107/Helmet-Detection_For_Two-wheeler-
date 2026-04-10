@@ -1,0 +1,12 @@
+flask==3.0.0
+ultralytics==8.2.0
+opencv-python==4.9.0.80
+torch
+torchvision
+numpy==1.26.4
+pillow
+fpdf
+werkzeug
+matplotlib
+scipy
+pandas
